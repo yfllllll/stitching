@@ -52,69 +52,64 @@ def test_superpoint_lightglue_stitching(image_folder, superpoint_model_path, lig
     print(f"  SuperPoint: {superpoint_model_path}")  
     print(f"  LightGlue: {lightglue_model_path}")  
       
-    try:  
-        # 手动创建检测器和匹配器以指定模型路径  
-        print("\n创建 SuperPoint 特征检测器...")  
-        detector = FeatureDetector("superpoint", model_path=superpoint_model_path)  
-          
-        print("创建 LightGlue 特征匹配器...")  
-        matcher = FeatureMatcher("lightglue", model_path=lightglue_model_path)  
-          
-        # 创建拼接器配置（不包含检测器和匹配器相关参数）  
-        stitcher_config = {  
-            "confidence_threshold": 0.2,  
-            "crop": False,  
-            "medium_megapix": 0.6,  
-            "low_megapix": 0.1,  
-            "final_megapix": -1  
-        }  
-          
-        # 创建拼接器  
-        print("创建拼接器...")  
-        stitcher = Stitcher(**stitcher_config)  
-          
-        # 替换默认的检测器和匹配器  
-        stitcher.detector = detector  
-        stitcher.matcher = matcher  
-          
-        # 开始性能监控  
-        start_time = time.time()  
-        tracemalloc.start()  
-          
-        # 执行拼接  
-        print("\n开始拼接...")  
-        panorama = stitcher.stitch(image_files)  
-          
-        # 获取性能指标  
-        _, peak_memory = tracemalloc.get_traced_memory()  
-        tracemalloc.stop()  
-        end_time = time.time()  
-          
-        # 保存结果  
-        output_path = output_folder / "panorama_superpoint_lightglue.jpg"  
-        cv.imwrite(str(output_path), panorama)  
-          
-        # 输出结果信息  
-        print(f"\n拼接成功！")  
-        print(f"全景图保存在: {output_path}")  
-        print(f"全景图尺寸: {panorama.shape}")  
-        print(f"执行时间: {end_time - start_time:.2f} 秒")  
-        print(f"峰值内存: {peak_memory / (1024 * 1024):.1f} MB")  
-          
-        return {  
-            "success": True,  
-            "output_path": str(output_path),  
-            "shape": panorama.shape,  
-            "execution_time": end_time - start_time,  
-            "peak_memory_mb": peak_memory / (1024 * 1024)  
-        }  
-          
-    except Exception as e:  
-        print(f"拼接失败: {e}")  
-        return {  
-            "success": False,  
-            "error": str(e)  
-        }  
+
+    # 手动创建检测器和匹配器以指定模型路径  
+    print("\n创建 SuperPoint 特征检测器...")  
+    detector = FeatureDetector("superpoint", model_path=superpoint_model_path)  
+        
+    print("创建 LightGlue 特征匹配器...")  
+    matcher = FeatureMatcher("lightglue", model_path=lightglue_model_path)  
+        
+    # 创建拼接器配置（不包含检测器和匹配器相关参数）  
+    stitcher_config = {  
+        "confidence_threshold": 0.2,  
+        "crop": False,  
+        "medium_megapix": 0.6,  
+        "low_megapix": 0.1,  
+        "final_megapix": -1  
+    }  
+        
+    # 创建拼接器  
+    print("创建拼接器...")  
+    stitcher = Stitcher(**stitcher_config)  
+        
+    # 替换默认的检测器和匹配器  
+    stitcher.detector = detector  
+    stitcher.matcher = matcher  
+        
+    # 开始性能监控  
+    start_time = time.time()  
+    tracemalloc.start()  
+        
+    # 执行拼接  
+    print("\n开始拼接...")  
+    panorama = stitcher.stitch(image_files)  
+        
+    # 获取性能指标  
+    _, peak_memory = tracemalloc.get_traced_memory()  
+    tracemalloc.stop()  
+    end_time = time.time()  
+        
+    # 保存结果  
+    output_path = output_folder / "panorama_superpoint_lightglue.jpg"  
+    cv.imwrite(str(output_path), panorama)  
+        
+    # 输出结果信息  
+    print(f"\n拼接成功！")  
+    print(f"全景图保存在: {output_path}")  
+    print(f"全景图尺寸: {panorama.shape}")  
+    print(f"执行时间: {end_time - start_time:.2f} 秒")  
+    print(f"峰值内存: {peak_memory / (1024 * 1024):.1f} MB")  
+        
+    return {  
+        "success": True,  
+        "output_path": str(output_path),  
+        "shape": panorama.shape,  
+        "execution_time": end_time - start_time,  
+        "peak_memory_mb": peak_memory / (1024 * 1024)  
+    }  
+        
+
   
 def test_with_verbose_mode(image_folder, superpoint_model_path, lightglue_model_path, output_folder=None):  
     """  
@@ -139,32 +134,30 @@ def test_with_verbose_mode(image_folder, superpoint_model_path, lightglue_model_
     if len(image_files) < 2:  
         raise ValueError(f"需要至少2张图片进行拼接，当前找到 {len(image_files)} 张")  
       
-    try:  
-        # 创建检测器和匹配器  
-        detector = FeatureDetector("superpoint", model_path=superpoint_model_path)  
-        matcher = FeatureMatcher("lightglue", model_path=lightglue_model_path)  
+   
+    # 创建检测器和匹配器  
+    detector = FeatureDetector("superpoint", model_path=superpoint_model_path)  
+    matcher = FeatureMatcher("lightglue", model_path=lightglue_model_path)  
+        
+    # 配置拼接器  
+    stitcher_config = {  
+        "confidence_threshold": 0.2,  
+        "crop": False  
+    }  
+        
+    stitcher = Stitcher(**stitcher_config)  
+    stitcher.detector = detector  
+    stitcher.matcher = matcher  
+        
+    print(f"使用详细模式拼接，结果保存在: {output_folder}")  
+    panorama = stitcher.stitch_verbose(image_files, verbose_dir=str(output_folder))  
+        
+    print(f"详细模式拼接完成！")  
+    print(f"检查 {output_folder} 文件夹查看中间结果")  
+        
+    return panorama  
           
-        # 配置拼接器  
-        stitcher_config = {  
-            "confidence_threshold": 0.2,  
-            "crop": False  
-        }  
-          
-        stitcher = Stitcher(**stitcher_config)  
-        stitcher.detector = detector  
-        stitcher.matcher = matcher  
-          
-        print(f"使用详细模式拼接，结果保存在: {output_folder}")  
-        panorama = stitcher.stitch_verbose(image_files, verbose_dir=str(output_folder))  
-          
-        print(f"详细模式拼接完成！")  
-        print(f"检查 {output_folder} 文件夹查看中间结果")  
-          
-        return panorama  
-          
-    except Exception as e:  
-        print(f"详细模式拼接失败: {e}")  
-        return None  
+ 
   
 def compare_with_traditional_methods(image_folder, superpoint_model_path, lightglue_model_path):  
     """  
@@ -187,64 +180,60 @@ def compare_with_traditional_methods(image_folder, superpoint_model_path, lightg
       
     # 测试传统 ORB + Homography  
     print("\n1. 测试 ORB + Homography...")  
-    try:  
-        start_time = time.time()  
-        tracemalloc.start()  
-          
-        stitcher_orb = Stitcher(detector="orb", matcher_type="homography", confidence_threshold=0.3)  
-        panorama_orb = stitcher_orb.stitch(image_files)  
-          
-        _, peak_memory = tracemalloc.get_traced_memory()  
-        tracemalloc.stop()  
-        end_time = time.time()  
-          
-        results["orb_homography"] = {  
-            "success": True,  
-            "execution_time": end_time - start_time,  
-            "peak_memory_mb": peak_memory / (1024 * 1024),  
-            "shape": panorama_orb.shape  
-        }  
-          
-        # 保存结果  
-        output_path = Path(image_folder) / "results" / "panorama_orb_homography.jpg"  
-        output_path.parent.mkdir(exist_ok=True)  
-        cv.imwrite(str(output_path), panorama_orb)  
-          
-        print(f"  ORB + Homography 完成: {end_time - start_time:.2f}s, {peak_memory / (1024 * 1024):.1f}MB")  
-          
-    except Exception as e:  
-        results["orb_homography"] = {"success": False, "error": str(e)}  
-        print(f"  ORB + Homography 失败: {e}")  
+   
+    start_time = time.time()  
+    tracemalloc.start()  
+        
+    stitcher_orb = Stitcher(detector="orb", matcher_type="homography", confidence_threshold=0.3)  
+    panorama_orb = stitcher_orb.stitch(image_files)  
+        
+    _, peak_memory = tracemalloc.get_traced_memory()  
+    tracemalloc.stop()  
+    end_time = time.time()  
+        
+    results["orb_homography"] = {  
+        "success": True,  
+        "execution_time": end_time - start_time,  
+        "peak_memory_mb": peak_memory / (1024 * 1024),  
+        "shape": panorama_orb.shape  
+    }  
+        
+    # 保存结果  
+    output_path = Path(image_folder) / "results" / "panorama_orb_homography.jpg"  
+    output_path.parent.mkdir(exist_ok=True)  
+    cv.imwrite(str(output_path), panorama_orb)  
+        
+    print(f"  ORB + Homography 完成: {end_time - start_time:.2f}s, {peak_memory / (1024 * 1024):.1f}MB")  
+        
+
       
     # 测试 SIFT + Homography  
     print("\n2. 测试 SIFT + Homography...")  
-    try:  
-        start_time = time.time()  
-        tracemalloc.start()  
-          
-        stitcher_sift = Stitcher(detector="sift", matcher_type="homography", confidence_threshold=0.65)  
-        panorama_sift = stitcher_sift.stitch(image_files)  
-          
-        _, peak_memory = tracemalloc.get_traced_memory()  
-        tracemalloc.stop()  
-        end_time = time.time()  
-          
-        results["sift_homography"] = {  
-            "success": True,  
-            "execution_time": end_time - start_time,  
-            "peak_memory_mb": peak_memory / (1024 * 1024),  
-            "shape": panorama_sift.shape  
-        }  
-          
-        # 保存结果  
-        output_path = Path(image_folder) / "results" / "panorama_sift_homography.jpg"  
-        cv.imwrite(str(output_path), panorama_sift)  
-          
-        print(f"  SIFT + Homography 完成: {end_time - start_time:.2f}s, {peak_memory / (1024 * 1024):.1f}MB")  
-          
-    except Exception as e:  
-        results["sift_homography"] = {"success": False, "error": str(e)}  
-        print(f"  SIFT + Homography 失败: {e}")  
+    
+    start_time = time.time()  
+    tracemalloc.start()  
+        
+    stitcher_sift = Stitcher(detector="sift", matcher_type="homography", confidence_threshold=0.65)  
+    panorama_sift = stitcher_sift.stitch(image_files)  
+        
+    _, peak_memory = tracemalloc.get_traced_memory()  
+    tracemalloc.stop()  
+    end_time = time.time()  
+        
+    results["sift_homography"] = {  
+        "success": True,  
+        "execution_time": end_time - start_time,  
+        "peak_memory_mb": peak_memory / (1024 * 1024),  
+        "shape": panorama_sift.shape  
+    }  
+        
+    # 保存结果  
+    output_path = Path(image_folder) / "results" / "panorama_sift_homography.jpg"  
+    cv.imwrite(str(output_path), panorama_sift)  
+        
+    print(f"  SIFT + Homography 完成: {end_time - start_time:.2f}s, {peak_memory / (1024 * 1024):.1f}MB")  
+        
+
       
     # 测试 SuperPoint + LightGlue  
     print("\n3. 测试 SuperPoint + LightGlue...")  
@@ -298,37 +287,32 @@ def main():
       
     choice = input("请输入选择 (1-4): ").strip()  
       
-    try:  
-        if choice in ["1", "4"]:  
-            print("\n=== 基本拼接测试 ===")  
-            result = test_superpoint_lightglue_stitching(  
-                image_folder, superpoint_model, lightglue_model  
-            )  
-              
-            if result["success"]:  
-                print("基本测试完成！")  
-            else:  
-                print("基本测试失败！")  
+ 
+    if choice in ["1", "4"]:  
+        print("\n=== 基本拼接测试 ===")  
+        result = test_superpoint_lightglue_stitching(  
+            image_folder, superpoint_model, lightglue_model  
+        )  
+            
+        if result["success"]:  
+            print("基本测试完成！")  
+        else:  
+            print("基本测试失败！")  
+        
+    if choice in ["2", "4"]:  
+        print("\n=== 详细模式测试 ===")  
+        test_with_verbose_mode(  
+            image_folder, superpoint_model, lightglue_model  
+        )
+    if choice in ["3", "4"]:  
+        print("\n=== 性能对比测试 ===")  
+        compare_with_traditional_methods(  
+            image_folder, superpoint_model, lightglue_model  
+        )  
+        
+    print("\n所有测试完成!")  
           
-        if choice in ["2", "4"]:  
-            print("\n=== 详细模式测试 ===")  
-            test_with_verbose_mode(  
-                image_folder, superpoint_model, lightglue_model  
-            )
-        if choice in ["3", "4"]:  
-            print("\n=== 性能对比测试 ===")  
-            compare_with_traditional_methods(  
-                image_folder, superpoint_model, lightglue_model  
-            )  
-          
-        print("\n所有测试完成！")  
-          
-    except KeyboardInterrupt:  
-        print("\n用户中断测试")  
-    except Exception as e:  
-        print(f"\n测试过程中发生错误: {e}")  
-        import traceback  
-        traceback.print_exc()  
+
   
 if __name__ == "__main__":  
     main()
