@@ -23,9 +23,7 @@ class FeatureMatcher:
         if matcher_type == "affine":
             self.matcher = cv.detail_AffineBestOf2NearestMatcher(**kwargs)
         elif matcher_type == "lightglue":
-            self.matcher = cv.detail_LightGlueMatcher(
-                model_path, mode, match_thresh, **kwargs
-            )
+            self.matcher = cv.detail.LightGlue.create(model_path, mode, match_thresh)
         elif range_width == -1:
             self.matcher = cv.detail_BestOf2NearestMatcher(**kwargs)
         else:
