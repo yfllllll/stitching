@@ -7,15 +7,25 @@ import numpy as np
 class FeatureMatcher:
     """https://docs.opencv.org/4.x/da/d87/classcv_1_1detail_1_1FeaturesMatcher.html"""
 
-    MATCHER_CHOICES = ("homography", "affine")
+    MATCHER_CHOICES = ("homography", "affine", "lightglue")
     DEFAULT_MATCHER = "homography"
     DEFAULT_RANGE_WIDTH = -1
 
     def __init__(
-        self, matcher_type=DEFAULT_MATCHER, range_width=DEFAULT_RANGE_WIDTH, **kwargs
+        self,
+        matcher_type=DEFAULT_MATCHER,
+        range_width=DEFAULT_RANGE_WIDTH,
+        model_path="lightglue.onnx",
+        mode=cv.Stitcher_PANORAMA, # its value only can be cv.Stitcher_PANORAMA or cv.Stitcher_SCANS
+        match_thresh=0.7,
+        **kwargs,
     ):
         if matcher_type == "affine":
             self.matcher = cv.detail_AffineBestOf2NearestMatcher(**kwargs)
+        elif matcher_type == "lightglue":
+            self.matcher = cv.detail_LightGlueMatcher(
+                model_path, mode, match_thresh, **kwargs
+            )
         elif range_width == -1:
             self.matcher = cv.detail_BestOf2NearestMatcher(**kwargs)
         else:

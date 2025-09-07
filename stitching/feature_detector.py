@@ -12,14 +12,15 @@ class FeatureDetector:
     DETECTOR_CHOICES = OrderedDict()
 
     DETECTOR_CHOICES["orb"] = cv.ORB.create
-    DETECTOR_CHOICES["sift"] = cv.SIFT_create
-    DETECTOR_CHOICES["brisk"] = cv.BRISK_create
-    DETECTOR_CHOICES["akaze"] = cv.AKAZE_create
+    DETECTOR_CHOICES["superpoint"] = cv.SuperPoint.create #对于super point，需要传入模型路径modelPath参数
+    DETECTOR_CHOICES["sift"] = cv.SIFT.create
+    DETECTOR_CHOICES["brisk"] = cv.BRISK.create
+    DETECTOR_CHOICES["akaze"] = cv.AKAZE.create
 
     DEFAULT_DETECTOR = list(DETECTOR_CHOICES.keys())[0]
 
-    def __init__(self, detector=DEFAULT_DETECTOR, **kwargs):
-        self.detector = FeatureDetector.DETECTOR_CHOICES[detector](**kwargs)
+    def __init__(self, detector=DEFAULT_DETECTOR, model_path="superpoint.onnx", **kwargs):
+        self.detector = FeatureDetector.DETECTOR_CHOICES[detector](model_path, **kwargs)
 
     def detect_features(self, img, *args, **kwargs):
         return cv.detail.computeImageFeatures2(self.detector, img, *args, **kwargs)
