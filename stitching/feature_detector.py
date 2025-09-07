@@ -20,7 +20,10 @@ class FeatureDetector:
     DEFAULT_DETECTOR = list(DETECTOR_CHOICES.keys())[0]
 
     def __init__(self, detector=DEFAULT_DETECTOR, model_path="superpoint.onnx", **kwargs):
-        self.detector = FeatureDetector.DETECTOR_CHOICES[detector](model_path, **kwargs)
+        if detector == "superpoint":
+            self.detector = FeatureDetector.DETECTOR_CHOICES[detector](model_path)
+        else:
+            self.detector = FeatureDetector.DETECTOR_CHOICES[detector](**kwargs)
 
     def detect_features(self, img, *args, **kwargs):
         return cv.detail.computeImageFeatures2(self.detector, img, *args, **kwargs)
