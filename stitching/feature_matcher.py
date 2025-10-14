@@ -201,7 +201,7 @@ class RoMAFeatureMatcher:
                             dmatch.distance = m.distance  
                             matches.append(dmatch)  
                         match_info.matches = matches  
-                        match_info.inliers_mask = original.inliers_mask.copy() if original.inliers_mask is not None else []
+                        match_info.inliers_mask = original.inliers_mask if original.inliers_mask is not None else []
                         # 求逆单应性矩阵  
                         if original.H is not None and len(original.H) > 0:  
                             match_info.H = np.linalg.inv(original.H)  
