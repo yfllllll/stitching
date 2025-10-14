@@ -50,3 +50,29 @@ class FeatureDetector:
         kwargs.setdefault("color", (0, 255, 0))
         keypoints = features.getKeypoints()
         return cv.drawKeypoints(img, keypoints, None, **kwargs)
+
+
+class RoMAFeatureDetector:  
+    def __init__(self, roma_matcher):  
+        self.roma_matcher = roma_matcher  
+        # 存储图像用于后续匹配  
+        self.images = []  
+          
+    def detect(self, imgs):  
+        """检测特征 - 对于RoMA,我们只需要存储图像"""  
+        self.images = imgs  
+        features = []  
+          
+        for img in imgs:  
+            # 创建一个空的 ImageFeatures 对象  
+            # RoMA 不需要预先提取特征点,但我们需要返回兼容的格式  
+            img_features = cv.detail.ImageFeatures()  
+            # 设置图像索引  
+            img_features.img_idx = len(features)  
+            features.append(img_features)  
+              
+        return features  
+      
+    def detect_with_masks(self, imgs, masks):  
+        # RoMA 不支持 masks,直接调用 detect  
+        return self.detect(imgs)
