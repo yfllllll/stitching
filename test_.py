@@ -16,7 +16,7 @@ matcher = RoMAFeatureMatcher(
   
                  # 可选：启用匹配图分析    
 stitcher = Stitcher(confidence_threshold=0.2,  matches_graph_dot_file="matches.txt")  
-stitcher.detector = detector  
-stitcher.matcher = matcher  
+# stitcher.detector = detector  
+# stitcher.matcher = matcher  
   
 panorama = stitcher.stitch(["imgs/灯杆2一倍_frame_000012.jpg", "imgs/灯杆2一倍_frame_000013.jpg", "imgs/灯杆2一倍_frame_000014.jpg"])

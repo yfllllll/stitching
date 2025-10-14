@@ -31,13 +31,17 @@ class ImageStitchingOptimizer:
         self.stitcher_config = {    
                 "detector": detector,  
                 "matcher_type": matcher_type,    
-                "confidence_threshold": confidence_threshold,    
-                "crop": False,    
+                "confidence_threshold": 0.1,    
+                "crop": False,
+                "match_conf": 0.05,
+                "range_width" : 5,
+                 # "adjuster":"no",
                 "nfeatures": 2000,  # 增加特征点    
-                "medium_megapix": 0.6,    
+                "medium_megapix": 0.6,
                 "low_megapix": 0.1,    
-                "final_megapix": -1,    
-                "matches_graph_dot_file": None  # 可选：启用匹配图分析    
+                "final_megapix": -1,
+                # "try_use_gpu": True,
+                "matches_graph_dot_file": "matches.txt"  # 可选：启用匹配图分析    
             }  
         
     def find_images(self, folder_path: str) -> List[str]:    
@@ -130,15 +134,21 @@ class ImageStitchingOptimizer:
                 stitcher.detector = FeatureDetector(self.detector)  
           
         # 手动创建并设置匹配器  
+        print("匹配器:")
+        print(self.matcher_type)
+        match_conf = FeatureMatcher.get_match_conf(None, self.detector)  
         if self.matcher_type == "lightglue":  
             print(f"使用 LightGlue 匹配器，模型路径: {self.lightglue_model_path}")  
-            stitcher.matcher = FeatureMatcher("lightglue", model_path=self.lightglue_model_path)  
+            stitcher.matcher = FeatureMatcher("lightglue", 
+                                              model_path=self.lightglue_model_path,
+                                              range_width=self.stitcher_config.get("range_width", FeatureMatcher.DEFAULT_RANGE_WIDTH),
+                                              match_conf=match_conf)  
         else:  
             # 传统匹配器  
-            match_conf = FeatureMatcher.get_match_conf(None, self.detector)  
+           
             stitcher.matcher = FeatureMatcher(  
                 self.matcher_type,  
-                range_width=FeatureMatcher.DEFAULT_RANGE_WIDTH,  
+                range_width=self.stitcher_config.get("range_width", FeatureMatcher.DEFAULT_RANGE_WIDTH),  
                 match_conf=match_conf  
             )  
           
@@ -270,31 +280,32 @@ def main():
     print("=" * 50)    
   
     # 获取用户输入  
-    folder_path = input("请输入图像文件夹路径 [默认: imgs]: ").strip() or 'imgs'  
+    folder_path = 'imgs'  
   
     # 配置选项  
     print("\n配置选项:")  
     print("支持的检测器: sift, orb, superpoint, akaze, brisk")  
-    detector = input("特征检测器 [默认: superpoint]: ").strip() or "superpoint"  
+    detector =  "superpoint"  
       
     print("支持的匹配器: homography, affine, lightglue")  
-    matcher_type = input("特征匹配器 [默认: lightglue]: ").strip() or "homography"  
+    matcher_type = 'lightglue'
+    #"lightglue"  
       
-    confidence = float(input("置信度阈值 (0.1-1.0) [默认: 0.1]: ").strip() or "0.1")    
-    exclude_top = float(input("排除顶部百分比 (0.0-0.5) [默认: 0.15]: ").strip() or "0.15") 
-    exclude_bottom = float(input("排除底部百分比 (0.0-0.5) [默认: 0.15]: ").strip() or "0.15")    
-    verbose = input("启用详细输出? (y/n) [默认: n]: ").strip().lower() == 'y'    
-    save_masks = input("保存掩码? (y/n) [默认: y]: ").strip().lower() == 'y'  
+    confidence = 1.
+    exclude_top = 0.0
+    exclude_bottom = 0.0
+    verbose = True    
+    save_masks = False
       
     # 模型路径配置（仅在使用深度学习方法时需要）  
     superpoint_model_path = "/root/weights/superpoint.onnx"  
     lightglue_model_path = "/root/weights/superpoint_lightglue.onnx"  
       
-    if detector == "superpoint":  
-        superpoint_model_path = input(f"请输入 SuperPoint 模型路径 [默认: {superpoint_model_path}]: ").strip() or superpoint_model_path  
+    # if detector == "superpoint":  
+    #     superpoint_model_path = input(f"请输入 SuperPoint 模型路径 [默认: {superpoint_model_path}]: ").strip() or superpoint_model_path  
           
-    if matcher_type == "lightglue":  
-        lightglue_model_path = input(f"请输入 LightGlue 模型路径 [默认: {lightglue_model_path}]: ").strip() or lightglue_model_path  
+    # if matcher_type == "lightglue":  
+    #     lightglue_model_path = input(f"请输入 LightGlue 模型路径 [默认: {lightglue_model_path}]: ").strip() or lightglue_model_path  
       
     # 创建优化器并处理    
     optimizer = ImageStitchingOptimizer(    
