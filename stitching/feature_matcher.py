@@ -107,6 +107,7 @@ class RoMAFeatureMatcher:
         self.range_width = range_width  
           
     def match_features(self, features):  
+        """使用 RoMA 进行特征匹配,支持 range_width 和对称匹配矩阵"""  
         imgs = self.detector.images  
         num_images = len(imgs)  
         pairwise_matches = []  
@@ -116,10 +117,11 @@ class RoMAFeatureMatcher:
                 match_info = cv.detail.MatchesInfo()  
                 
                 if i == j:  
+                    # 同一张图像  
                     match_info.confidence = 0  
                     match_info.num_inliers = 0  
                 elif i < j and (self.range_width == -1 or abs(i-j) <= self.range_width):  
-                    # 使用 RoMA 计算单应性矩阵  
+                    # 计算正向匹配 (i -> j)  
                     result = self._compute_matches_roma(imgs[i], imgs[j])  
                     
                     if result and 'H' in result and result['H'] is not None:  
@@ -146,23 +148,22 @@ class RoMAFeatureMatcher:
                             if distances[min_idx] < reproj_threshold:  
                                 matched_pairs.add((idx_i, min_idx))  
                         
-                        # 反向匹配: j -> i (可选,用于双向验证)  
-                        if result['H'] is not None:  
-                            H_inv = np.linalg.inv(H)  
-                            pts_j_reshaped = pts_j.reshape(-1, 1, 2)  
-                            pts_i_projected = cv.perspectiveTransform(pts_j_reshaped, H_inv)  
-                            pts_i_orig = np.float32([kp.pt for kp in kpts_i])  
+                        # 反向匹配: j -> i (双向验证)  
+                        H_inv = np.linalg.inv(H)  
+                        pts_j_reshaped = pts_j.reshape(-1, 1, 2)  
+                        pts_i_projected = cv.perspectiveTransform(pts_j_reshaped, H_inv)  
+                        pts_i_orig = np.float32([kp.pt for kp in kpts_i])  
+                        
+                        reverse_matches = set()  
+                        for idx_j, pt_proj in enumerate(pts_i_projected.reshape(-1, 2)):  
+                            distances = np.linalg.norm(pts_i_orig - pt_proj, axis=1)  
+                            min_idx = np.argmin(distances)  
                             
-                            reverse_matches = set()  
-                            for idx_j, pt_proj in enumerate(pts_i_projected.reshape(-1, 2)):  
-                                distances = np.linalg.norm(pts_i_orig - pt_proj, axis=1)  
-                                min_idx = np.argmin(distances)  
-                                
-                                if distances[min_idx] < reproj_threshold:  
-                                    reverse_matches.add((min_idx, idx_j))  
-                            
-                            # 只保留双向一致的匹配  
-                            matched_pairs = matched_pairs.intersection(reverse_matches)  
+                            if distances[min_idx] < reproj_threshold:  
+                                reverse_matches.add((min_idx, idx_j))  
+                        
+                        # 只保留双向一致的匹配  
+                        matched_pairs = matched_pairs.intersection(reverse_matches)  
                         
                         # 构建 DMatch 对象  
                         matches = []  
@@ -170,19 +171,49 @@ class RoMAFeatureMatcher:
                             dmatch = cv.DMatch()  
                             dmatch.queryIdx = idx_i  
                             dmatch.trainIdx = idx_j  
-                            dmatch.distance = 0  # 或使用重投影误差  
+                            dmatch.distance = 0  
                             matches.append(dmatch)  
                         
                         match_info.matches = matches  
                         match_info.num_inliers = len(matches)  
+                        match_info.inliers_mask = [1] * len(matches)
                         match_info.confidence = min(len(matches) / 50.0, 1.0)  
                         match_info.H = H  
                     else:  
                         match_info.confidence = 0  
                         match_info.num_inliers = 0  
+                elif i > j:  
+                    # 创建对称匹配 (j -> i)  
+                    original_idx = j * num_images + i  
+                    if original_idx < len(pairwise_matches):  
+                        original = pairwise_matches[original_idx]  
+                        
+                        # 复制基本信息  
+                        match_info.confidence = original.confidence  
+                        match_info.num_inliers = original.num_inliers  
+                        
+                        # 交换 queryIdx 和 trainIdx  
+                        matches = []  
+                        for m in original.matches:  
+                            dmatch = cv.DMatch()  
+                            dmatch.queryIdx = m.trainIdx  
+                            dmatch.trainIdx = m.queryIdx  
+                            dmatch.distance = m.distance  
+                            matches.append(dmatch)  
+                        match_info.matches = matches  
+                        match_info.inliers_mask = original.inliers_mask.copy() if original.inliers_mask is not None else []
+                        # 求逆单应性矩阵  
+                        if original.H is not None and len(original.H) > 0:  
+                            match_info.H = np.linalg.inv(original.H)  
+                    else:  
+                        match_info.confidence = 0  
+                        match_info.num_inliers = 0 
+                        match_info.inliers_mask = [] 
                 else:  
+                    # 超出 range_width 范围  
                     match_info.confidence = 0  
                     match_info.num_inliers = 0  
+                    match_info.inliers_mask = []
                 
                 match_info.src_img_idx = i  
                 match_info.dst_img_idx = j  
